@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"github.com/shyiko/kubesec/gpg"
+	log "github.com/sirupsen/logrus"
 	"testing"
+	"os"
 )
 
 func TestDecryptMalformed(t *testing.T) {
@@ -29,6 +32,11 @@ func TestDecryptGivenEmptyData(t *testing.T) {
 }
 
 func TestDecrypt(t *testing.T) {
+	log.SetLevel(log.DebugLevel)
+	os.Setenv("HOME", "../")
+	gpg.SetPassphrase("test")
+	gpg.SetKeyring("test.keyring")
+
 	expected := "data:\n  KEY: dmFsdWUK\nkind: Secret\n"
 	encrypted, err := EncryptWithContext([]byte(expected), EncryptionContext{})
 	if err != nil {

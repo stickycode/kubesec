@@ -74,6 +74,7 @@ func Edit(content []byte, opt EditOpt) ([]byte, error) {
 		return nil, err
 	}
 	defer func() { os.Remove(tmp.Name()) }()
+	fmt.Println(string(input))
 	ioutil.WriteFile(tmp.Name(), input, 0600)
 	err = openInEditor(opt.Editor, tmp.Name())
 	if err != nil {

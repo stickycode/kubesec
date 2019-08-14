@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/shyiko/kubesec/gpg"
+	"os"
 	"reflect"
 	"regexp"
 	"sort"
@@ -23,6 +24,10 @@ func TestEncryptMalformed(t *testing.T) {
 }
 
 func TestEncryptGivenEmptyData(t *testing.T) {
+	os.Setenv("HOME", "../")
+	gpg.SetPassphrase("test")
+	gpg.SetKeyring("test.keyring")
+
 	actual, err := EncryptWithContext([]byte(`{"kind": "Secret"}`), EncryptionContext{})
 	if err != nil {
 		t.Fatal(err)
@@ -34,6 +39,10 @@ func TestEncryptGivenEmptyData(t *testing.T) {
 }
 
 func TestEncrypt(t *testing.T) {
+	os.Setenv("HOME", "../")
+	gpg.SetPassphrase("test")
+	gpg.SetKeyring("test.keyring")
+
 	actual, err := EncryptWithContext([]byte(`{"kind": "Secret", "data": {"key": "dmFsdWU="}}`), EncryptionContext{})
 	if err != nil {
 		t.Fatal(err)
@@ -74,6 +83,10 @@ func TestKeyRotation(t *testing.T) {
 }
 
 func TestEncryptKeyAdd(t *testing.T) {
+	os.Setenv("HOME", "../")
+	gpg.SetPassphrase("test")
+	gpg.SetKeyring("test.keyring")
+
 	input := "data:\n  key: dmFsdWU=\nkind: Secret\n"
 	encrypted, err := EncryptWithContext([]byte(input), EncryptionContext{})
 	if err != nil {
@@ -83,7 +96,7 @@ func TestEncryptKeyAdd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	anotherFP := "72ECF46A56B4AD39C907BBB71646B01B86E50310"
+	anotherFP := "4459A441306219F88CD7581E1A5669F6742AE4E2"
 	actual, err := Encrypt(encrypted, KeySetMutation{Add: []Key{{KTPGP, anotherFP}}})
 	if err != nil {
 		t.Fatal(err)
@@ -92,8 +105,8 @@ func TestEncryptKeyAdd(t *testing.T) {
 	sort.Strings(fps)
 	expected := "data:\n  key: ANYTHING\nkind: Secret\n" + strings.Join([]string{
 		"# kubesec:v:3",
-		"# kubesec:pgp:" + fps[0] + ":ANYTHING",
 		"# kubesec:pgp:" + fps[1] + ":ANYTHING",
+		"# kubesec:pgp:" + fps[0] + ":ANYTHING",
 		"# kubesec:mac:ANYTHING",
 	}, "\n") + "\n"
 	if !regexp.MustCompile(strings.Replace(regexp.QuoteMeta(expected), "ANYTHING", "[^\\n]*", -1)).
@@ -119,13 +132,17 @@ func TestFingerprintRemoveLastOne(t *testing.T) {
 */
 
 func TestEncryptKeyRemove(t *testing.T) {
+	os.Setenv("HOME", "../")
+	gpg.SetPassphrase("test")
+	gpg.SetKeyring("test.keyring")
+
 	primaryKey, err := gpg.PrimaryKey()
 	if err != nil {
 		t.Fatal(err)
 	}
 	expected := []string{
 		primaryKey.Fingerprint,
-		"72ECF46A56B4AD39C907BBB71646B01B86E50310",
+		"4459A441306219F88CD7581E1A5669F6742AE4E2",
 	}
 	encrypted, err := EncryptWithContext([]byte("data:\n  key: dmFsdWU=\nkind: Secret\n"), EncryptionContext{
 		Keys: Keys{

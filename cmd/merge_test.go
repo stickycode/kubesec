@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"github.com/shyiko/kubesec/gpg"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -56,6 +58,10 @@ data:
 }
 
 func TestMerge(t *testing.T) {
+	os.Setenv("HOME", "../")
+	gpg.SetPassphrase("test")
+	gpg.SetKeyring("test.keyring")
+
 	encrypted, err := EncryptWithContext(
 		[]byte(`{"kind":"Secret","data":{"KEY":"VkFMVUU=","ANOTHER_KEY":"QU5PVEhFUl9WQUxVRQ=="}}`),
 		EncryptionContext{},

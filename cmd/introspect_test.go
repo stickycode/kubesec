@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"github.com/shyiko/kubesec/gpg"
 	"reflect"
 	"testing"
+	// log "github.com/sirupsen/logrus"
+	"os"
 )
 
 func TestIntrospectUnencrypted(t *testing.T) {
@@ -18,9 +21,13 @@ func TestIntrospectUnencrypted(t *testing.T) {
 }
 
 func TestIntrospect(t *testing.T) {
+	os.Setenv("HOME", "../")
+	gpg.SetPassphrase("test")
+	gpg.SetKeyring("test.keyring")
+
 	expected := []string{
-		"160A7A9CF46221A56B06AD64461A804F2609FD89",
-		"72ECF46A56B4AD39C907BBB71646B01B86E50310",
+		"4459A441306219F88CD7581E1A5669F6742AE4E2",
+		"58C0E6EC8AF3DD8CDB8DFF5F855409ED748CE5B1",
 	}
 	encrypted, err := EncryptWithContext([]byte("data:\n  key: dmFsdWU=\nkind: Secret\n"), EncryptionContext{
 		Keys: Keys{

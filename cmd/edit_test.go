@@ -7,9 +7,14 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+   "fmt"
 )
 
 func TestEncryptDecrypt(t *testing.T) {
+	os.Setenv("HOME", "../")
+	gpg.SetPassphrase("test")
+	gpg.SetKeyring("test.keyring")
+
 	expected := "data:\n  key: dmFsdWU=\nkind: Secret\n"
 	encrypted, err := EncryptWithContext([]byte(expected), EncryptionContext{})
 	if err != nil {
@@ -25,10 +30,14 @@ func TestEncryptDecrypt(t *testing.T) {
 }
 
 func TestEncryptDecryptDifferentKey(t *testing.T) {
+	os.Setenv("HOME", "../")
+	gpg.SetPassphrase("test")
+	gpg.SetKeyring("test.keyring")
+
 	expected := "data:\n  key: dmFsdWU=\nkind: Secret\n"
 	encrypted, err := EncryptWithContext([]byte(expected), EncryptionContext{
 		Keys: Keys{
-			KeyWithDEK{Key{KTPGP, "72ECF46A56B4AD39C907BBB71646B01B86E50310"}, nil},
+			KeyWithDEK{Key{KTPGP, "0AC2A82FEAE728486494D1B844E00FB8E1F372E9"}, nil},
 		},
 	})
 	if err != nil {
@@ -149,3 +158,27 @@ kind: Secret
 		t.Fatalf("actual: %#v != expected: %#v", string(actual), expected)
 	}
 }
+
+func TestEditEncryptedEmbedded(t *testing.T) {
+	os.Setenv("EDITOR", "true")
+	encrypted, err := EncryptWithContext([]byte("data:\n  key: YXBwOgogIGJsYWg6IGFzZGZhc2YKICB0d286IGFzZnNhZgoK\nkind: Secret\n"), EncryptionContext{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual, err := Edit(encrypted, EditOpt{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(string(actual))
+	expected := `data:
+  key: ANYTHING
+kind: Secret
+# kubesec:v:3
+# kubesec:pgp:ANYTHING
+# kubesec:mac:ANYTHING`
+	if !regexp.MustCompile(strings.Replace(regexp.QuoteMeta(expected), "ANYTHING", "[^\\n]*", -1)).
+		MatchString(string(actual)) {
+		t.Fatalf("actual: %#v != expected: %#v", string(actual), expected)
+	}
+}
+

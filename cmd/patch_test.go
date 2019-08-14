@@ -1,10 +1,16 @@
 package cmd
 
 import (
+	"github.com/shyiko/kubesec/gpg"
+	"os"
 	"testing"
 )
 
 func TestPatch(t *testing.T) {
+	os.Setenv("HOME", "../")
+	gpg.SetPassphrase("test")
+	gpg.SetKeyring("test.keyring")
+
 	source := `data:
   another_key: value
   key: value
